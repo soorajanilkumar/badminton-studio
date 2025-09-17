@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BrainCircuit, Users, Swords, Star } from "lucide-react";
+import { ArrowLeft, BrainCircuit, Swords, Star } from "lucide-react";
 import type { Player, Team, MatchAssignment } from "@/lib/types";
 import { useMemo } from "react";
 
@@ -58,11 +58,10 @@ export function MatchSchedule({
   const courts = Array.from({ length: numCourts }, (_, i) => i);
   const games = Array.from({ length: numGames }, (_, i) => i);
   const teamsMap = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-
-
-  const allAssignedTeamIds = new Set(
-    Object.values(assignments).flatMap((a) => [a.teamA, a.teamB].filter(Boolean))
-  );
+  
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => b.combinedSkill - a.combinedSkill);
+  }, [teams]);
 
   const renderTeamSelect = (
     gameIndex: number,
@@ -72,19 +71,23 @@ export function MatchSchedule({
     const matchKey = `game-${gameIndex}_court-${courtIndex}`;
     const currentAssignment = assignments[matchKey];
     const currentValue = currentAssignment?.[teamSlot];
-    const otherTeamSlot = teamSlot === "teamA" ? "teamB" : "teamA";
-    const otherTeamId = currentAssignment?.[otherTeamSlot];
-    const otherTeam = otherTeamId ? teamsMap.get(otherTeamId) : null;
-    const otherTeamPlayerIds = otherTeam ? new Set(otherTeam.players.map(p => p.id)) : new Set();
-
-
-    const availableTeams = teams.filter(team => {
-        if (team.id === otherTeamId) return false;
-        if(otherTeamPlayerIds.size > 0){
-            return !team.players.some(p => otherTeamPlayerIds.has(p.id))
+    
+    // Get all player IDs assigned in the current game, excluding the current selection slot
+    const assignedPlayerIdsInGame = new Set<string>();
+    for (let c = 0; c < numCourts; c++) {
+        const key = `game-${gameIndex}_court-${c}`;
+        const match = assignments[key];
+        if (match) {
+            if (key !== matchKey || teamSlot !== 'teamA') {
+                const teamA = match.teamA ? teamsMap.get(match.teamA) : null;
+                if (teamA) teamA.players.forEach(p => assignedPlayerIdsInGame.add(p.id));
+            }
+            if (key !== matchKey || teamSlot !== 'teamB') {
+                const teamB = match.teamB ? teamsMap.get(match.teamB) : null;
+                if (teamB) teamB.players.forEach(p => assignedPlayerIdsInGame.add(p.id));
+            }
         }
-        return true;
-    });
+    }
 
     return (
       <Select
@@ -100,19 +103,17 @@ export function MatchSchedule({
            <SelectItem value="none">
                 <span className="text-muted-foreground">-- None --</span>
             </SelectItem>
-          {availableTeams.map((team) => {
-            const isUsedElsewhere =
-              allAssignedTeamIds.has(team.id) && team.id !== currentValue;
+          {sortedTeams.map((team) => {
+            const isTeamDisabled = team.players.some(p => assignedPlayerIdsInGame.has(p.id));
 
             return (
               <SelectItem
                 key={team.id}
                 value={team.id}
-                disabled={team.id === otherTeamId}
-                className={isUsedElsewhere ? "text-muted-foreground/70" : ""}
+                disabled={isTeamDisabled}
               >
                 <div className="flex justify-between w-full">
-                  <span>{team.name} {isUsedElsewhere ? " (Used)" : ""}</span>
+                  <span>{team.name}</span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Star className="w-3 h-3 text-accent fill-accent" />
                     {team.combinedSkill}
@@ -135,7 +136,7 @@ export function MatchSchedule({
             Match Schedule
           </CardTitle>
           <CardDescription>
-            Assign teams to games and courts. Used teams are greyed out but can be re-selected.
+            Assign teams to games and courts. Players can only be in one court per game.
           </CardDescription>
         </div>
         <div className="flex gap-2">
