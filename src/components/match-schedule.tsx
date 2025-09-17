@@ -63,6 +63,16 @@ export function MatchSchedule({
     return [...teams].sort((a, b) => b.combinedSkill - a.combinedSkill);
   }, [teams]);
 
+  const allUsedTeamIds = useMemo(() => {
+    const usedIds = new Set<string>();
+    Object.values(assignments).forEach(match => {
+        if (match.teamA) usedIds.add(match.teamA);
+        if (match.teamB) usedIds.add(match.teamB);
+    });
+    return usedIds;
+  }, [assignments]);
+
+
   const renderTeamSelect = (
     gameIndex: number,
     courtIndex: number,
@@ -73,29 +83,27 @@ export function MatchSchedule({
     const currentValue = currentAssignment?.[teamSlot];
     
     const assignedPlayerIdsInGame = new Set<string>();
-    const assignedTeamIdsInGame = new Set<string>();
-
+    
+    // Check for assigned players within the same game slot
     for (let c = 0; c < numCourts; c++) {
         const key = `game-${gameIndex}_court-${c}`;
         const match = assignments[key];
         if (match) {
             if (match.teamA) {
-                assignedTeamIdsInGame.add(match.teamA);
                 const teamA = teamsMap.get(match.teamA);
                 if (teamA) teamA.players.forEach(p => assignedPlayerIdsInGame.add(p.id));
             }
             if (match.teamB) {
-                assignedTeamIdsInGame.add(match.teamB);
                 const teamB = teamsMap.get(match.teamB);
                 if (teamB) teamB.players.forEach(p => assignedPlayerIdsInGame.add(p.id));
             }
         }
     }
     
+    // If a team is currently selected in this slot, its players should not be considered "assigned" for its own dropdown.
     const currentTeam = currentValue ? teamsMap.get(currentValue) : null;
     if (currentTeam) {
         currentTeam.players.forEach(p => assignedPlayerIdsInGame.delete(p.id));
-        assignedTeamIdsInGame.delete(currentValue);
     }
 
     return (
@@ -114,8 +122,9 @@ export function MatchSchedule({
             </SelectItem>
           {sortedTeams.map((team) => {
             const hasAssignedPlayer = team.players.some(p => assignedPlayerIdsInGame.has(p.id));
-            const isTeamAlreadyUsed = assignedTeamIdsInGame.has(team.id);
-            const isTeamDisabled = hasAssignedPlayer || isTeamAlreadyUsed;
+            // A team is used if it's in the master list of used teams, unless it's the team currently in this slot.
+            const isTeamUsedInSchedule = allUsedTeamIds.has(team.id) && team.id !== currentValue;
+            const isTeamDisabled = hasAssignedPlayer || isTeamUsedInSchedule;
 
             return (
               <SelectItem
@@ -147,7 +156,7 @@ export function MatchSchedule({
             Match Schedule
           </CardTitle>
           <CardDescription>
-            Assign teams to games and courts. Players can only be in one court per game.
+            Assign teams to games and courts. Each team can only play once.
           </CardDescription>
         </div>
         <div className="flex gap-2">
