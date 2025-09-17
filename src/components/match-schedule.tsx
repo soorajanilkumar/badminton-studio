@@ -72,21 +72,30 @@ export function MatchSchedule({
     const currentAssignment = assignments[matchKey];
     const currentValue = currentAssignment?.[teamSlot];
     
-    // Get all player IDs assigned in the current game, excluding the current selection slot
     const assignedPlayerIdsInGame = new Set<string>();
+    const assignedTeamIdsInGame = new Set<string>();
+
     for (let c = 0; c < numCourts; c++) {
         const key = `game-${gameIndex}_court-${c}`;
         const match = assignments[key];
         if (match) {
-            if (key !== matchKey || teamSlot !== 'teamA') {
-                const teamA = match.teamA ? teamsMap.get(match.teamA) : null;
+            if (match.teamA) {
+                assignedTeamIdsInGame.add(match.teamA);
+                const teamA = teamsMap.get(match.teamA);
                 if (teamA) teamA.players.forEach(p => assignedPlayerIdsInGame.add(p.id));
             }
-            if (key !== matchKey || teamSlot !== 'teamB') {
-                const teamB = match.teamB ? teamsMap.get(match.teamB) : null;
+            if (match.teamB) {
+                assignedTeamIdsInGame.add(match.teamB);
+                const teamB = teamsMap.get(match.teamB);
                 if (teamB) teamB.players.forEach(p => assignedPlayerIdsInGame.add(p.id));
             }
         }
+    }
+    
+    const currentTeam = currentValue ? teamsMap.get(currentValue) : null;
+    if (currentTeam) {
+        currentTeam.players.forEach(p => assignedPlayerIdsInGame.delete(p.id));
+        assignedTeamIdsInGame.delete(currentValue);
     }
 
     return (
@@ -104,7 +113,9 @@ export function MatchSchedule({
                 <span className="text-muted-foreground">-- None --</span>
             </SelectItem>
           {sortedTeams.map((team) => {
-            const isTeamDisabled = team.players.some(p => assignedPlayerIdsInGame.has(p.id));
+            const hasAssignedPlayer = team.players.some(p => assignedPlayerIdsInGame.has(p.id));
+            const isTeamAlreadyUsed = assignedTeamIdsInGame.has(team.id);
+            const isTeamDisabled = hasAssignedPlayer || isTeamAlreadyUsed;
 
             return (
               <SelectItem
