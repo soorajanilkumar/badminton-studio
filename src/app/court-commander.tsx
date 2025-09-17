@@ -82,7 +82,7 @@ export default function CourtCommander() {
       gameIndex: number,
       courtIndex: number,
       teamSlot: "teamA" | "teamB",
-      teamId: string
+      teamId: string | null
     ) => {
       setAssignments((prev) => {
         const newAssignments = { ...prev };

@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BrainCircuit, Users, Swords, Star } from "lucide-react";
 import type { Player, Team, MatchAssignment } from "@/lib/types";
+import { useMemo } from "react";
 
 interface MatchScheduleProps {
   numCourts: number;
@@ -37,7 +38,7 @@ interface MatchScheduleProps {
     gameIndex: number,
     courtIndex: number,
     teamSlot: "teamA" | "teamB",
-    teamId: string
+    teamId: string | null
   ) => void;
   onGetSuggestions: () => void;
   onReset: () => void;
@@ -56,6 +57,8 @@ export function MatchSchedule({
 }: MatchScheduleProps) {
   const courts = Array.from({ length: numCourts }, (_, i) => i);
   const games = Array.from({ length: numGames }, (_, i) => i);
+  const teamsMap = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
 
   const allAssignedTeamIds = new Set(
     Object.values(assignments).flatMap((a) => [a.teamA, a.teamB].filter(Boolean))
@@ -70,20 +73,34 @@ export function MatchSchedule({
     const currentAssignment = assignments[matchKey];
     const currentValue = currentAssignment?.[teamSlot];
     const otherTeamSlot = teamSlot === "teamA" ? "teamB" : "teamA";
-    const otherTeamInMatch = currentAssignment?.[otherTeamSlot];
+    const otherTeamId = currentAssignment?.[otherTeamSlot];
+    const otherTeam = otherTeamId ? teamsMap.get(otherTeamId) : null;
+    const otherTeamPlayerIds = otherTeam ? new Set(otherTeam.players.map(p => p.id)) : new Set();
+
+
+    const availableTeams = teams.filter(team => {
+        if (team.id === otherTeamId) return false;
+        if(otherTeamPlayerIds.size > 0){
+            return !team.players.some(p => otherTeamPlayerIds.has(p.id))
+        }
+        return true;
+    });
 
     return (
       <Select
         value={currentValue ?? ""}
         onValueChange={(value) =>
-          onAssignmentChange(gameIndex, courtIndex, teamSlot, value)
+          onAssignmentChange(gameIndex, courtIndex, teamSlot, value === "none" ? null : value)
         }
       >
         <SelectTrigger className="w-full min-w-[200px]">
           <SelectValue placeholder="Select a team" />
         </SelectTrigger>
         <SelectContent>
-          {teams.map((team) => {
+           <SelectItem value="none">
+                <span className="text-muted-foreground">-- None --</span>
+            </SelectItem>
+          {availableTeams.map((team) => {
             const isUsedElsewhere =
               allAssignedTeamIds.has(team.id) && team.id !== currentValue;
 
@@ -91,7 +108,7 @@ export function MatchSchedule({
               <SelectItem
                 key={team.id}
                 value={team.id}
-                disabled={team.id === otherTeamInMatch}
+                disabled={team.id === otherTeamId}
                 className={isUsedElsewhere ? "text-muted-foreground/70" : ""}
               >
                 <div className="flex justify-between w-full">
