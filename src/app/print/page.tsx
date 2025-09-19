@@ -9,7 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Shuttlecock, Users } from "lucide-react";
+import { Users } from "lucide-react";
+import { Shuttlecock } from "@/components/icons";
 import type { Player, Team, MatchAssignment } from "@/lib/types";
 
 interface StoredSchedule {
@@ -35,6 +36,12 @@ export default function PrintPage() {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    if (schedule) {
+      setTimeout(() => window.print(), 500);
+    }
+  }, [schedule]);
+
   if (loading) {
     return <div className="p-8">Loading schedule...</div>;
   }
@@ -58,7 +65,7 @@ export default function PrintPage() {
 
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8" id="printable-schedule">
        <header className="flex flex-col items-center justify-center text-center mb-8">
             <div className="flex items-center justify-center gap-4">
               <Shuttlecock className="w-12 h-12 md:w-16 md:h-16 text-primary" />
@@ -105,7 +112,7 @@ export default function PrintPage() {
       </div>
 
       {availableTeams.length > 0 && (
-        <div className="mt-12">
+        <div className="mt-12 break-inside-avoid">
             <h2 className="text-2xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
                 <Users className="w-6 h-6 text-primary" />
                 Available Teams
