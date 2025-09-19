@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Shuttlecock } from "@/components/icons";
+import { Shuttlecock, Users } from "lucide-react";
 import type { Player, Team, MatchAssignment } from "@/lib/types";
 
 interface StoredSchedule {
@@ -26,7 +26,11 @@ export default function PrintPage() {
   useEffect(() => {
     const storedData = localStorage.getItem("printableSchedule");
     if (storedData) {
-      setSchedule(JSON.parse(storedData));
+      try {
+        setSchedule(JSON.parse(storedData));
+      } catch (error) {
+        console.error("Failed to parse schedule data from localStorage", error);
+      }
     }
     setLoading(false);
   }, []);
@@ -43,6 +47,14 @@ export default function PrintPage() {
   const games = Array.from({ length: numGames }, (_, i) => i);
   const courts = Array.from({ length: numCourts }, (_, i) => i);
   const teamsMap = new Map(teams.map((t) => [t.id, t]));
+
+  const assignedTeamIds = new Set<string>();
+  Object.values(assignments).forEach(match => {
+    if (match.teamA) assignedTeamIds.add(match.teamA);
+    if (match.teamB) assignedTeamIds.add(match.teamB);
+  });
+
+  const availableTeams = teams.filter(team => !assignedTeamIds.has(team.id));
 
 
   return (
@@ -91,6 +103,24 @@ export default function PrintPage() {
           </div>
         ))}
       </div>
+
+      {availableTeams.length > 0 && (
+        <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                <Users className="w-6 h-6 text-primary" />
+                Available Teams
+            </h2>
+            <p className="text-muted-foreground mb-4">These teams were not assigned to any match.</p>
+             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
+                {availableTeams.map(team => (
+                    <div key={team.id} className="bg-secondary/50 p-2 rounded-md">
+                        {team.name}
+                    </div>
+                ))}
+            </div>
+        </div>
+      )}
+
        <footer className="text-center p-4 mt-8 text-muted-foreground text-sm">
         <p>Built for the love of the game.</p>
       </footer>
