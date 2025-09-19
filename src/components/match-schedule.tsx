@@ -41,7 +41,7 @@ interface MatchScheduleProps {
     teamId: string | null
   ) => void;
   onGetSuggestions: () => void;
-  onReset: () => void;
+  onBackToSetup: () => void;
   isGettingSuggestions: boolean;
 }
 
@@ -53,7 +53,7 @@ export function MatchSchedule({
   assignments,
   onAssignmentChange,
   onGetSuggestions,
-  onReset,
+  onBackToSetup,
   isGettingSuggestions,
 }: MatchScheduleProps) {
   const courts = Array.from({ length: numCourts }, (_, i) => i);
@@ -170,7 +170,7 @@ export function MatchSchedule({
           </CardDescription>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onReset}>
+          <Button variant="outline" onClick={onBackToSetup}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Setup
           </Button>
           <Button onClick={onGetSuggestions} disabled={isGettingSuggestions}>

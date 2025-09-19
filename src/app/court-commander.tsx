@@ -61,21 +61,24 @@ export default function CourtCommander() {
 
   const handleConfigSubmit = useCallback((values: ConfigData) => {
     startTransition(() => {
+      const isNewConfig = JSON.stringify(config) !== JSON.stringify(values);
       setConfig(values);
-      // Initialize assignments
-      const initialAssignments: MatchAssignment = {};
-      for (let g = 0; g < values.numGames; g++) {
-        for (let c = 0; c < values.numCourts; c++) {
-          initialAssignments[`game-${g}_court-${c}`] = {
-            teamA: null,
-            teamB: null,
-          };
+      // Initialize assignments only if config has changed
+      if (isNewConfig) {
+        const initialAssignments: MatchAssignment = {};
+        for (let g = 0; g < values.numGames; g++) {
+          for (let c = 0; c < values.numCourts; c++) {
+            initialAssignments[`game-${g}_court-${c}`] = {
+              teamA: null,
+              teamB: null,
+            };
+          }
         }
+        setAssignments(initialAssignments);
       }
-      setAssignments(initialAssignments);
       setShowSchedule(true);
     });
-  }, []);
+  }, [config]);
 
   const handleAssignmentChange = useCallback(
     (
@@ -149,17 +152,25 @@ export default function CourtCommander() {
     }
   };
 
-  const handleReset = () => {
+  const handleBackToSetup = () => {
+    setShowSchedule(false);
+  };
+  
+  const handleResetApp = () => {
     setShowSchedule(false);
     setConfig(null);
     setAssignments({});
-  };
+  }
 
   return (
     <>
       <div className="transition-opacity duration-500">
         {!showSchedule ? (
-          <ConfigPanel onSubmit={handleConfigSubmit} />
+          <ConfigPanel 
+            onSubmit={handleConfigSubmit} 
+            initialValues={config}
+            onReset={handleResetApp} 
+          />
         ) : (
           config && (
             <MatchSchedule
@@ -170,7 +181,7 @@ export default function CourtCommander() {
               assignments={assignments}
               onAssignmentChange={handleAssignmentChange}
               onGetSuggestions={handleGetSuggestions}
-              onReset={handleReset}
+              onBackToSetup={handleBackToSetup}
               isGettingSuggestions={isGettingSuggestions}
             />
           )

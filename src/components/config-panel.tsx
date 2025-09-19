@@ -15,7 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { PlusCircle, Star, Trash2, Users } from "lucide-react";
+import { PlusCircle, Star, Trash2, Users, RotateCcw } from "lucide-react";
+import { useEffect } from "react";
 
 const formSchema = z
   .object({
@@ -45,22 +46,33 @@ type ConfigFormValues = z.infer<typeof formSchema>;
 
 interface ConfigPanelProps {
   onSubmit: (values: ConfigFormValues) => void;
+  initialValues: ConfigFormValues | null;
+  onReset: () => void;
 }
 
-export function ConfigPanel({ onSubmit }: ConfigPanelProps) {
+const defaultValues: ConfigFormValues = {
+  numCourts: 2,
+  numGames: 3,
+  players: [
+    { name: "Alice", skillLevel: 3 },
+    { name: "Bob", skillLevel: 4 },
+    { name: "Charlie", skillLevel: 2 },
+    { name: "Diana", skillLevel: 5 },
+  ],
+};
+
+export function ConfigPanel({ onSubmit, initialValues, onReset }: ConfigPanelProps) {
   const form = useForm<ConfigFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      numCourts: 2,
-      numGames: 3,
-      players: [
-        { name: "Alice", skillLevel: 3 },
-        { name: "Bob", skillLevel: 4 },
-        { name: "Charlie", skillLevel: 2 },
-        { name: "Diana", skillLevel: 5 },
-      ],
-    },
+    defaultValues: initialValues ?? defaultValues,
   });
+  
+  useEffect(() => {
+    if (initialValues) {
+      form.reset(initialValues);
+    }
+  }, [initialValues, form]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -69,11 +81,15 @@ export function ConfigPanel({ onSubmit }: ConfigPanelProps) {
 
   return (
     <Card className="max-w-4xl mx-auto shadow-lg border-2 border-primary/20">
-      <CardHeader>
+      <CardHeader className="flex flex-row justify-between items-center">
         <CardTitle className="text-2xl font-headline flex items-center gap-2">
           <Users className="text-primary" />
           Game Setup
         </CardTitle>
+        <Button variant="ghost" size="sm" onClick={onReset}>
+          <RotateCcw className="mr-2" />
+          Reset All
+        </Button>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -174,7 +190,7 @@ export function ConfigPanel({ onSubmit }: ConfigPanelProps) {
             </div>
 
             <Button type="submit" size="lg" className="w-full">
-              Create Schedule
+              {initialValues ? 'Update & View Schedule' : 'Create Schedule'}
             </Button>
           </form>
         </Form>
