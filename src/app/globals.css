@@ -83,3 +83,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  .print\:border-none {
+    border: none !important;
+  }
+  main, footer {
+    display: none;
+  }
+}

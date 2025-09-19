@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BrainCircuit, Swords, Star } from "lucide-react";
+import { ArrowLeft, BrainCircuit, Swords, Star, Printer } from "lucide-react";
 import type { Player, Team, MatchAssignment } from "@/lib/types";
 import { useMemo } from "react";
 
@@ -72,6 +72,9 @@ export function MatchSchedule({
     return usedIds;
   }, [assignments]);
 
+  const handlePrint = () => {
+    window.print();
+  };
 
   const renderTeamSelect = (
     gameIndex: number,
@@ -122,7 +125,6 @@ export function MatchSchedule({
             </SelectItem>
           {sortedTeams.map((team) => {
             const hasAssignedPlayer = team.players.some(p => assignedPlayerIdsInGame.has(p.id));
-            // A team is used if it's in the master list of used teams, unless it's the team currently in this slot.
             const isTeamUsedInSchedule = allUsedTeamIds.has(team.id) && team.id !== currentValue;
             const isTeamDisabled = hasAssignedPlayer || isTeamUsedInSchedule;
 
@@ -147,9 +149,43 @@ export function MatchSchedule({
     );
   };
 
+  const renderPrintableSchedule = () => (
+    <div className="hidden print:block space-y-8">
+      {games.map((gameIndex) => (
+        <div key={`print-game-${gameIndex}`}>
+          <h3 className="text-xl font-bold mb-2">Game {gameIndex + 1}</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Court</TableHead>
+                <TableHead>Team A</TableHead>
+                <TableHead>Team B</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {courts.map((courtIndex) => {
+                const matchKey = `game-${gameIndex}_court-${courtIndex}`;
+                const match = assignments[matchKey];
+                const teamA = match?.teamA ? teamsMap.get(match.teamA) : null;
+                const teamB = match?.teamB ? teamsMap.get(match.teamB) : null;
+                return (
+                  <TableRow key={`print-court-row-${gameIndex}-${courtIndex}`}>
+                    <TableCell className="font-medium">{courtIndex + 1}</TableCell>
+                    <TableCell>{teamA?.name ?? 'Not Assigned'}</TableCell>
+                    <TableCell>{teamB?.name ?? 'Not Assigned'}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <Card className="w-full max-w-7xl mx-auto shadow-lg border-2 border-primary/20">
-      <CardHeader className="flex-row items-center justify-between">
+    <Card className="w-full max-w-7xl mx-auto shadow-lg border-2 border-primary/20 print:shadow-none print:border-none">
+      <CardHeader className="flex-row items-center justify-between no-print">
         <div>
           <CardTitle className="text-2xl font-headline flex items-center gap-2">
             <Swords className="text-primary" />
@@ -167,48 +203,54 @@ export function MatchSchedule({
             <BrainCircuit className="mr-2 h-4 w-4" />
             {isGettingSuggestions ? 'Optimizing...' : 'Get Suggestions'}
           </Button>
+          <Button variant="outline" onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" /> Print Schedule
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="game-0" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+        <div className="no-print">
+          <Tabs defaultValue="game-0" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+              {games.map((gameIndex) => (
+                <TabsTrigger key={`game-tab-${gameIndex}`} value={`game-${gameIndex}`}>
+                  Game {gameIndex + 1}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {games.map((gameIndex) => (
-              <TabsTrigger key={`game-tab-${gameIndex}`} value={`game-${gameIndex}`}>
-                Game {gameIndex + 1}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {games.map((gameIndex) => (
-            <TabsContent key={`game-content-${gameIndex}`} value={`game-${gameIndex}`}>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Court</TableHead>
-                      <TableHead>Team A</TableHead>
-                      <TableHead>Team B</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {courts.map((courtIndex) => (
-                      <TableRow key={`court-row-${gameIndex}-${courtIndex}`}>
-                        <TableCell className="font-medium">
-                          {courtIndex + 1}
-                        </TableCell>
-                        <TableCell>
-                          {renderTeamSelect(gameIndex, courtIndex, "teamA")}
-                        </TableCell>
-                        <TableCell>
-                          {renderTeamSelect(gameIndex, courtIndex, "teamB")}
-                        </TableCell>
+              <TabsContent key={`game-content-${gameIndex}`} value={`game-${gameIndex}`}>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[100px]">Court</TableHead>
+                        <TableHead>Team A</TableHead>
+                        <TableHead>Team B</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+                    </TableHeader>
+                    <TableBody>
+                      {courts.map((courtIndex) => (
+                        <TableRow key={`court-row-${gameIndex}-${courtIndex}`}>
+                          <TableCell className="font-medium">
+                            {courtIndex + 1}
+                          </TableCell>
+                          <TableCell>
+                            {renderTeamSelect(gameIndex, courtIndex, "teamA")}
+                          </TableCell>
+                          <TableCell>
+                            {renderTeamSelect(gameIndex, courtIndex, "teamB")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+        {renderPrintableSchedule()}
       </CardContent>
     </Card>
   );
