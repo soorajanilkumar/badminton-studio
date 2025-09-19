@@ -48,6 +48,7 @@ interface MatchScheduleProps {
 export function MatchSchedule({
   numCourts,
   numGames,
+  players,
   teams,
   assignments,
   onAssignmentChange,
@@ -73,7 +74,14 @@ export function MatchSchedule({
   }, [assignments]);
 
   const handlePrint = () => {
-    window.print();
+    const printableData = {
+      assignments,
+      teams,
+      numGames,
+      numCourts
+    };
+    localStorage.setItem('printableSchedule', JSON.stringify(printableData));
+    window.open('/print', '_blank');
   };
 
   const renderTeamSelect = (
@@ -149,43 +157,9 @@ export function MatchSchedule({
     );
   };
 
-  const renderPrintableSchedule = () => (
-    <div className="hidden print:block space-y-8">
-      {games.map((gameIndex) => (
-        <div key={`print-game-${gameIndex}`}>
-          <h3 className="text-xl font-bold mb-2">Game {gameIndex + 1}</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Court</TableHead>
-                <TableHead>Team A</TableHead>
-                <TableHead>Team B</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courts.map((courtIndex) => {
-                const matchKey = `game-${gameIndex}_court-${courtIndex}`;
-                const match = assignments[matchKey];
-                const teamA = match?.teamA ? teamsMap.get(match.teamA) : null;
-                const teamB = match?.teamB ? teamsMap.get(match.teamB) : null;
-                return (
-                  <TableRow key={`print-court-row-${gameIndex}-${courtIndex}`}>
-                    <TableCell className="font-medium">{courtIndex + 1}</TableCell>
-                    <TableCell>{teamA?.name ?? 'Not Assigned'}</TableCell>
-                    <TableCell>{teamB?.name ?? 'Not Assigned'}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
-    <Card className="w-full max-w-7xl mx-auto shadow-lg border-2 border-primary/20 print:shadow-none print:border-none">
-      <CardHeader className="flex-row items-center justify-between no-print">
+    <Card className="w-full max-w-7xl mx-auto shadow-lg border-2 border-primary/20">
+      <CardHeader className="flex-row items-center justify-between">
         <div>
           <CardTitle className="text-2xl font-headline flex items-center gap-2">
             <Swords className="text-primary" />
@@ -209,7 +183,7 @@ export function MatchSchedule({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="no-print">
+        <div>
           <Tabs defaultValue="game-0" className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
               {games.map((gameIndex) => (
@@ -250,7 +224,6 @@ export function MatchSchedule({
             ))}
           </Tabs>
         </div>
-        {renderPrintableSchedule()}
       </CardContent>
     </Card>
   );

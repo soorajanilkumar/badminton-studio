@@ -89,23 +89,25 @@
     background: #fff !important;
     color: #000 !important;
   }
-  .no-print,
-  .no-print * {
+
+  /* Hide all elements by default */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Display the printable container and its children */
+  #printable-schedule, #printable-schedule * {
+    visibility: visible;
+  }
+  
+  #printable-schedule {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  header, footer, .no-print {
     display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-  .print\:block {
-    display: block !important;
-  }
-  .print\:shadow-none {
-    box-shadow: none !important;
-  }
-  .print\:border-none {
-    border: none !important;
-  }
-  main, footer {
-    display: none;
   }
 }
