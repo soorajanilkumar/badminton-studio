@@ -1,5 +1,27 @@
-# Firebase Studio
+# 🚀 Badminton Doubles Games Generator
+Demo NextJS app that can be used to help simplify generating matches for your badminton meetup :wink:  
 
-This is a NextJS starter in Firebase Studio.
+courtesy: firebase-studio
 
-To get started, take a look at src/app/page.tsx.
+---
+
+## 🛠 Getting Started
+
+### 1. Clone the repo
+
+```sh
+git clone <your-repo-url>
+cd badminton-studio
+```
+
+### 2. Run with Docker
+
+Spin up the development environment in seconds:
+
+```sh
+docker compose up
+```
+
+The app will be available at 👉 [http://localhost:9002](http://localhost:9002)
+
+---

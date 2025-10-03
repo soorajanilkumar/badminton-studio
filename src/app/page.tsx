@@ -24,7 +24,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-4">
               <Shuttlecock className="w-12 h-12 md:w-16 md:h-16 text-primary" />
               <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-foreground">
-                Court Commander
+                Baddies Doubles MatchMaker
               </h1>
             </div>
             <p className="text-muted-foreground mt-2 text-lg">
