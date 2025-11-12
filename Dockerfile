@@ -19,4 +19,3 @@ EXPOSE 9002
 # Start the app
 CMD ["npm", "run", "dev"]
 
-# AIzaSyAa2Ps54IJ_KL8UuixOgBwFUCmiIrfivmE
