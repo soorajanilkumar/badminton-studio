@@ -10,7 +10,7 @@ courtesy: firebase-studio
 ### 1. Clone the repo
 
 ```sh
-git clone <your-repo-url>
+git clone https://github.com/soorajanilkumar/badminton-studio.git
 cd badminton-studio
 ```
 
